@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"regexp"
+	"sync"
 
 	"github.com/miekg/dns"
 )
@@ -61,10 +62,22 @@ func main() {
 		}
 	})
 
-	server := &dns.Server{Addr: host, Net: "udp"}
-	logger.Infof("Starting at %s\n", host)
-	err = server.ListenAndServe()
-	if err != nil {
-		logger.Errorf("Failed to start server: %s\n ", err.Error())
-	}
+	var wg sync.WaitGroup
+	wg.Add(1) // Only add one wg as we wish for the server to restart if one fails
+
+	go func() {
+		defer wg.Done()
+		server := &dns.Server{Addr: host, Net: "udp"}
+		logger.Infof("Starting at %s/udp\n", host)
+		server.ListenAndServe()
+	}()
+
+	go func() {
+		defer wg.Done()
+		server := &dns.Server{Addr: host, Net: "tcp"}
+		logger.Infof("Starting at %s/tcp\n", host)
+		server.ListenAndServe()
+	}()
+
+	wg.Wait()
 }

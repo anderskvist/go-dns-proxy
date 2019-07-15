@@ -69,14 +69,16 @@ func main() {
 		defer wg.Done()
 		server := &dns.Server{Addr: host, Net: "udp"}
 		logger.Infof("Starting at %s/udp\n", host)
-		server.ListenAndServe()
+		err := server.ListenAndServe()
+		logger.Errorf("%s", err.Error())
 	}()
 
 	go func() {
 		defer wg.Done()
 		server := &dns.Server{Addr: host, Net: "tcp"}
 		logger.Infof("Starting at %s/tcp\n", host)
-		server.ListenAndServe()
+		err := server.ListenAndServe()
+		logger.Errorf("%s", err.Error())
 	}()
 
 	wg.Wait()
